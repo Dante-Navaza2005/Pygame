@@ -1,3 +1,7 @@
+#Dante Honorato Navaza
+#Danielle Guimaraes
+#TENTE SOBREVIVER 60 SEGUNDOS EVITANDO A SOBREMESA DO BANDEJAO E BOMBAS NUCLEARES CAINDO DO CEU!!!
+
 import pygame
 import random
 import time
@@ -21,8 +25,9 @@ presente_misterioso_anim_frame = 0
 bomba_anim_time = 0
 bomba_anim_frame = 0
 bomba = []
-
 doguinho_pulando = []
+
+ranking_vida = []
 
 presente_misterioso = []
 
@@ -44,6 +49,8 @@ down = False
 
 placar_atual = 0
 
+placar_vida_atual = 0
+
 recorde = 0
 
 def load_mapa(filename): #Lê o conteúdo do arquivo para a matriz
@@ -62,9 +69,11 @@ def load_mapa(filename): #Lê o conteúdo do arquivo para a matriz
 
 def load_ranking():
     try:
-        with open("ranking.txt", "r") as file:
-            ranking_data = file.readlines()
-            ranking = [float(time.strip()) for time in ranking_data]
+        with open("ranking", "r") as arq:
+            ranking_data = arq.readlines()
+            ranking = []
+            for time in ranking_data:
+                ranking.append(float(time.strip()))
             return ranking
     except FileNotFoundError:
         return []
@@ -80,6 +89,20 @@ def update_ranking(placar_atual, ranking):
     save_ranking(ranking_list)
 
 
+
+
+
+def carregar_estado_jogo():
+    with open("estado.txt", "r") as arq:
+        linhas = arq.readlines()
+        if linhas :
+            return linhas[0].strip()
+
+
+def atualizar_estado_jogo(estado):
+    with open("estado.txt", "w") as arq:
+            arq.write(f"{estado}")
+
 def game_over_screen(screen, placar_atual, ranking_list):
     global clock
 
@@ -87,19 +110,36 @@ def game_over_screen(screen, placar_atual, ranking_list):
     update_ranking(placar_atual,ranking_list)
     running = True
     while running:
-        screen.fill((190, 200, 220))
 
-        t1 = font.render("FALECEU", False, BLACK)
-        t2 = font.render(f"Seu tempo: {placar_atual:.2f}", False, BLACK)
-        t3 = font.render("FAÇA MELHOR na proxima", False, BLACK)
-        t4 = font.render("É facin :)", False, BLACK)
-        t5 = font.render("Pressione enter para recomeçar", False, BLACK)
+        if carregar_estado_jogo() == "ganhou" : 
+            screen.fill((100, 200, 80))
 
-        screen.blit(t1, (300, 90))
-        screen.blit(t2, (200, 170))
-        screen.blit(t3, (100, 240))
-        screen.blit(t4, (300, 330))
-        screen.blit(t5, (10, 440))
+            t1 = font.render(f"GANHOU COM {vidas} VIDAS", False, BLACK)
+            t2 = font.render(f"Seu tempo: {placar_atual:.2f}", False, BLACK)
+            t3 = font.render("Tente jogar denovo!", False, BLACK)
+            t4 = font.render("Porfavor :)", False, BLACK)
+            t5 = font.render("Pressione enter para recomeçar", False, BLACK)
+
+            screen.blit(t1, (160, 90))
+            screen.blit(t2, (200, 170))
+            screen.blit(t3, (140, 240))
+            screen.blit(t4, (300, 330))
+            screen.blit(t5, (10, 440))
+
+        else :
+            screen.fill((190, 200, 220))
+
+            t1 = font.render("FALECEU", False, BLACK)
+            t2 = font.render(f"Seu tempo: {placar_atual:.2f}", False, BLACK)
+            t3 = font.render("FAÇA MELHOR na proxima", False, BLACK)
+            t4 = font.render("É facin (sério só 60 segundos) :)", False, BLACK)
+            t5 = font.render("Pressione enter para recomeçar", False, BLACK)
+
+            screen.blit(t1, (300, 90))
+            screen.blit(t2, (200, 170))
+            screen.blit(t3, (100, 240))
+            screen.blit(t4, (0, 330))
+            screen.blit(t5, (10, 440))
 
 
         pygame.display.update()
@@ -117,6 +157,8 @@ def game_over_screen(screen, placar_atual, ranking_list):
 
     return False
 
+    
+
 def load_tiles():
     global  tile_quads
     cenario = pygame.image.load('cenario_1.png')
@@ -130,7 +172,11 @@ def load_tiles():
 
 
 def load():
-    global clock,som, doguinho_walk, doguinho_idle, doguinho_pulando, presente_misterioso, presente_misterioso_x, presente_misterioso_y, sys_font, bomba, bomba_x, bomba_y, recorde, arq, arq_saida
+    global clock,som, doguinho_walk, doguinho_idle, doguinho_pulando, presente_misterioso, presente_misterioso_x, presente_misterioso_y, sys_font, bomba, bomba_x, bomba_y, recorde, arq, arq_saida, estado_atual
+
+    estado_atual = "jogando"
+    atualizar_estado_jogo(estado_atual)
+    print(carregar_estado_jogo())
     clock = pygame.time.Clock() 
     musica = pygame.mixer.music.load('music_bg.mp3')
     som = pygame.mixer.Sound('dano.mp3')
@@ -174,7 +220,7 @@ def load():
 
     bomba_x = random.randint(0, width - bomba[bomba_anim_frame].get_width())
     bomba_y = -bomba[bomba_anim_frame].get_height()
-    
+    pygame.mixer.music.play()
 def mouse_click_down(px_mouse, py_mouse, mouse_buttons):
     if mouse_buttons[0]: # left
         if px_mouse>=35 and px_mouse<=85 and py_mouse>=80 and py_mouse<=130:
@@ -184,7 +230,7 @@ def mouse_click_down(px_mouse, py_mouse, mouse_buttons):
         
             
 def update(dt):
-    global doguinho_walk,contador_placar, doguinho_anim_frame, doguinho_pos_x, doguinho_anim_time, invert, doguinho_pos_y, walk, up, down, pulando, velocidade_pulo, altura_pulo, gravidade_velocide, presente_misterioso_y, presente_misterioso_x, presente_misterioso_anim_frame, presente_misterioso_anim_time, dificuldade, lista_tempo, bomba, bomba_x, bomba_y, bomba_anim_frame, bomba_anim_time, vidas, t1, t0, tempo_passado
+    global doguinho_walk,contador_placar, doguinho_anim_frame, doguinho_pos_x, doguinho_anim_time, invert, doguinho_pos_y, walk, up, down, pulando, velocidade_pulo, altura_pulo, gravidade_velocide, presente_misterioso_y, presente_misterioso_x, presente_misterioso_anim_frame, presente_misterioso_anim_time, dificuldade, lista_tempo, bomba, bomba_x, bomba_y, bomba_anim_frame, bomba_anim_time, vidas, t1, t0, tempo_passado, estado_atual
 
     keys = pygame.key.get_pressed()
 
@@ -199,7 +245,10 @@ def update(dt):
     if contador_int not in lista_tempo :
         lista_tempo.append(contador_int)
     
-   
+    if doguinho_pos_x > 900 :
+        doguinho_pos_x = -100
+    elif doguinho_pos_x < -100 :
+        doguinho_pos_x = 900
 
 
     bomba_y += dificuldade * dt
@@ -296,7 +345,7 @@ def update(dt):
     if lista_tempo[-1] % 4 == 0:
         dificuldade += 0.001    
 
-    t = sys_font.render(f"Tempo: {tempo_passado:.2f}", False, BLACK)
+    t = sys_font.render(f"Tempo: {tempo_passado:.2f} / 60", False, BLACK)
     screen.blit(t, (33,34))
 
     
@@ -304,7 +353,7 @@ def update(dt):
 
 def draw_screen(screen):
     screen.fill((190,200,220))
-    global tile_quads,placar_atual, presente_misterioso_anim_frame, presente_misterioso, vidas, presente_misterioso_x, presente_misterioso_anim_time, presente_misterioso_anim_frame_time, presente_misterioso, contador, bomba_anim_frame_time, bomba, bomba_anim_frame, bomba_x, bomba_y, ranking, tempo_passado, recorde
+    global tile_quads,placar_atual, presente_misterioso_anim_frame, presente_misterioso, vidas, presente_misterioso_x, presente_misterioso_anim_time, presente_misterioso_anim_frame_time, presente_misterioso, contador, bomba_anim_frame_time, bomba, bomba_anim_frame, bomba_x, bomba_y, ranking, tempo_passado, recorde, estado_atual
     pygame.draw.rect(screen, (240, 240, 240), (35, 80, 50, 50),0,2)
     pygame.draw.polygon(screen,(0, 0, 0), [(45, 85), (45, 125), (75, 105)],3)
     pygame.draw.rect(screen, (0, 0, 0), (35, 80, 50, 50),2,4)
@@ -313,6 +362,9 @@ def draw_screen(screen):
     pygame.draw.rect(screen, (0, 0, 0), (110, 85, 10, 40),2,3)
     pygame.draw.rect(screen, (0, 0, 0), (130, 85, 10, 40),2,3)
     
+    font = pygame.font.Font(pygame.font.get_default_font(), 20)
+
+
     
         
     for i in range(8): #Percorre a matriz e desenha quadrados coloridos 
@@ -358,13 +410,19 @@ def draw_screen(screen):
     t = sys_font.render(f"Maior Recorde: {recorde}", False, BLACK)
     screen.blit(t, (20,150))
 
+    t1 = font.render("Fuja do bandejão e das bombas! Setas para se mover e pular!", False, BLACK)
+    screen.blit(t1,(50,550))
+
+
 
 def main_loop(screen, ranking_list):  
-    global clock, vidas, parado, tempo_passado, t0, dificuldade,arq
+    global clock, vidas, parado, tempo_passado, t0, dificuldade,arq, estado_atual
     running = True
-    while running and vidas > 0:
+    while running and vidas > 0 :
         for e in pygame.event.get(): 
             if e.type == pygame.QUIT:
+                estado_atual = ""
+                atualizar_estado_jogo(estado_atual)
                 running = False
                 break
             elif e.type == pygame.MOUSEBUTTONDOWN: #detecta o inicio do clique do mouse
@@ -386,9 +444,18 @@ def main_loop(screen, ranking_list):
         update(dt)
         # Pygame atualiza o seu estado
         pygame.display.update()
-        
 
-    restart = game_over_screen(screen, tempo_passado, ranking_list)
+        if tempo_passado >= 60 :
+            running = False
+            estado_atual = "ganhou"
+
+    if estado_atual == "ganhou" :
+        atualizar_estado_jogo(estado_atual)
+        restart = game_over_screen(screen, tempo_passado, ranking_list)
+    else :
+        estado_atual = "perdeu"
+        atualizar_estado_jogo(estado_atual)
+        restart = game_over_screen(screen, tempo_passado, ranking_list)
 
     if restart:
         load()
@@ -410,7 +477,7 @@ ranking_list = load_ranking()
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Ta chovendo doguinho")
+pygame.display.set_caption("Doguinho vs Sobremesa do bandejão")
 load()
 main_loop(screen,ranking_list)
 pygame.quit()
